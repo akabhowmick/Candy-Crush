@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ScoreBoard } from "./components/Scoreboard";
 import { CandyColor } from "./types/interfaces";
 import { candyColors, emptyCandy } from "./components/HelperFunctions";
 
-// ! fix this
+// Interface for Drag Event Target with HTMLImageElement
+interface DragEventTarget extends EventTarget {
+  src: string;
+  alt: string;
+  getAttribute(name: string): string | null;
+}
 
-const App = () => {
-  const [currentColorArrangement, setCurrentColorArrangement] = useState([emptyCandy]);
+const App: React.FC = () => {
+  const [currentColorArrangement, setCurrentColorArrangement] = useState<CandyColor[]>([emptyCandy]);
   const [squareBeingDragged, setSquareBeingDragged] = useState<CandyColor>(emptyCandy);
-  const [squareBeingReplaced, setSquareBeingReplaced] = useState<CandyColor>(emptyCandy); 
-  // this needs to be an image...
-  const [scoreDisplay, setScoreDisplay] = useState(0);
+  const [squareBeingReplaced, setSquareBeingReplaced] = useState<CandyColor>(emptyCandy);
+  const [scoreDisplay, setScoreDisplay] = useState<number>(0);
   const width = 8;
 
   const checkForColumnOfFour = useCallback(() => {
@@ -69,7 +73,7 @@ const App = () => {
   }, [currentColorArrangement]);
 
   const checkForRowOfThree = useCallback(() => {
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < width * width; i++) {
       const rowOfThree = [i, i + 1, i + 2];
       const decidedColor = currentColorArrangement[i];
       const notValid = [6, 7, 14, 15, 22, 23, 30, 31, 38, 39, 46, 47, 54, 55, 63, 64];
@@ -104,18 +108,26 @@ const App = () => {
     }
   }, [currentColorArrangement]);
 
-  const dragStart = (e) => {
-    setSquareBeingDragged(e.target);
+  const dragStart = (e: React.DragEvent<HTMLImageElement>) => {
+    setSquareBeingDragged((e.target as DragEventTarget).src);
   };
-  const dragDrop = (e) => {
-    setSquareBeingReplaced(e.target);
-  };
-  const dragEnd = () => {
-    const squareBeingDraggedId = parseInt(squareBeingDragged?.getAttribute("data-id"));
-    const squareBeingReplacedId = parseInt(squareBeingReplaced.getAttribute("data-id"));
 
-    currentColorArrangement[squareBeingReplacedId] = squareBeingDragged.getAttribute("src");
-    currentColorArrangement[squareBeingDraggedId] = squareBeingReplaced.getAttribute("src");
+  const dragDrop = (e: React.DragEvent<HTMLImageElement>) => {
+    setSquareBeingReplaced((e.target as DragEventTarget).src);
+  };
+
+  const dragEnd = () => {
+    const squareBeingDraggedId = parseInt(squareBeingDragged.imageSrc.getAttribute("data-id") || "0");
+    const squareBeingReplacedId = parseInt(squareBeingReplaced.imageSrc.getAttribute("data-id") || "0");
+
+    currentColorArrangement[squareBeingReplacedId] = {
+      ...currentColorArrangement[squareBeingDraggedId],
+      image: currentColorArrangement[squareBeingDraggedId].image,
+    };
+    currentColorArrangement[squareBeingDraggedId] = {
+      ...currentColorArrangement[squareBeingReplacedId],
+      image: currentColorArrangement[squareBeingReplacedId].image,
+    };
 
     const validMoves = [
       squareBeingDraggedId - 1,
@@ -139,14 +151,20 @@ const App = () => {
       setSquareBeingDragged(emptyCandy);
       setSquareBeingReplaced(emptyCandy);
     } else {
-      currentColorArrangement[squareBeingReplacedId] = squareBeingReplaced.getAttribute("src");
-      currentColorArrangement[squareBeingDraggedId] = squareBeingDragged.getAttribute("src");
+      currentColorArrangement[squareBeingReplacedId] = {
+        ...currentColorArrangement[squareBeingDraggedId],
+        image: currentColorArrangement[squareBeingDraggedId].image,
+      };
+      currentColorArrangement[squareBeingDraggedId] = {
+        ...currentColorArrangement[squareBeingReplacedId],
+        image: currentColorArrangement[squareBeingReplacedId].image,
+      };
       setCurrentColorArrangement([...currentColorArrangement]);
     }
   };
 
   const createBoard = () => {
-    const randomColorArrangement = [];
+    const randomColorArrangement: CandyColor[] = [];
     for (let i = 0; i < width * width; i++) {
       const randomColor = candyColors[Math.floor(Math.random() * candyColors.length)];
       randomColorArrangement.push(randomColor);
@@ -183,14 +201,14 @@ const App = () => {
         {currentColorArrangement.map((candyColor, index) => (
           <img
             key={index}
-            src={candyColor.image}
-            alt={candyColor.name}
+            src={candyColor.imageSrc} // Changed from image
+            alt={candyColor.color}
             data-id={index}
             draggable={true}
             onDragStart={dragStart}
-            onDragOver={(e) => e.preventDefault()}
-            onDragEnter={(e) => e.preventDefault()}
-            onDragLeave={(e) => e.preventDefault()}
+            onDragOver={(e: React.DragEvent<HTMLImageElement>) => e.preventDefault()}
+            onDragEnter={(e: React.DragEvent<HTMLImageElement>) => e.preventDefault()}
+            onDragLeave={(e: React.DragEvent<HTMLImageElement>) => e.preventDefault()}
             onDrop={dragDrop}
             onDragEnd={dragEnd}
           />
