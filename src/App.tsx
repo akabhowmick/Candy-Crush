@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ScoreBoard } from "./components/Scoreboard";
 import { CandyColor } from "./types/interfaces";
-import { candyColors, emptyCandy } from "./components/HelperFunctions";
+import { candyColors, emptyCandy, generateNewCandy } from "./components/HelperFunctions";
 
-// Interface for Drag Event Target with HTMLImageElement
 interface DragEventTarget extends EventTarget {
   src: string;
   alt: string;
@@ -11,7 +10,9 @@ interface DragEventTarget extends EventTarget {
 }
 
 const App: React.FC = () => {
-  const [currentColorArrangement, setCurrentColorArrangement] = useState<CandyColor[]>([emptyCandy]);
+  const [currentColorArrangement, setCurrentColorArrangement] = useState<CandyColor[]>([
+    emptyCandy,
+  ]);
   const [squareBeingDragged, setSquareBeingDragged] = useState<CandyColor>(emptyCandy);
   const [squareBeingReplaced, setSquareBeingReplaced] = useState<CandyColor>(emptyCandy);
   const [scoreDisplay, setScoreDisplay] = useState<number>(0);
@@ -117,16 +118,20 @@ const App: React.FC = () => {
   };
 
   const dragEnd = () => {
-    const squareBeingDraggedId = parseInt(squareBeingDragged.imageSrc.getAttribute("data-id") || "0");
-    const squareBeingReplacedId = parseInt(squareBeingReplaced.imageSrc.getAttribute("data-id") || "0");
+    const squareBeingDraggedId = parseInt(
+      squareBeingDragged.imageSrc.getAttribute("data-id") || "0"
+    );
+    const squareBeingReplacedId = parseInt(
+      squareBeingReplaced.imageSrc.getAttribute("data-id") || "0"
+    );
 
     currentColorArrangement[squareBeingReplacedId] = {
       ...currentColorArrangement[squareBeingDraggedId],
-      image: currentColorArrangement[squareBeingDraggedId].image,
+      imageSrc: currentColorArrangement[squareBeingDraggedId].imageSrc,
     };
     currentColorArrangement[squareBeingDraggedId] = {
       ...currentColorArrangement[squareBeingReplacedId],
-      image: currentColorArrangement[squareBeingReplacedId].image,
+      imageSrc: currentColorArrangement[squareBeingReplacedId].imageSrc,
     };
 
     const validMoves = [
@@ -153,11 +158,11 @@ const App: React.FC = () => {
     } else {
       currentColorArrangement[squareBeingReplacedId] = {
         ...currentColorArrangement[squareBeingDraggedId],
-        image: currentColorArrangement[squareBeingDraggedId].image,
+        imageSrc: currentColorArrangement[squareBeingDraggedId].imageSrc,
       };
       currentColorArrangement[squareBeingDraggedId] = {
         ...currentColorArrangement[squareBeingReplacedId],
-        image: currentColorArrangement[squareBeingReplacedId].image,
+        imageSrc: currentColorArrangement[squareBeingReplacedId].imageSrc,
       };
       setCurrentColorArrangement([...currentColorArrangement]);
     }
@@ -167,7 +172,8 @@ const App: React.FC = () => {
     const randomColorArrangement: CandyColor[] = [];
     for (let i = 0; i < width * width; i++) {
       const randomColor = candyColors[Math.floor(Math.random() * candyColors.length)];
-      randomColorArrangement.push(randomColor);
+      const randomCandy = generateNewCandy(randomColor);
+      randomColorArrangement.push(randomCandy);
     }
     setCurrentColorArrangement(randomColorArrangement);
   };
@@ -201,7 +207,7 @@ const App: React.FC = () => {
         {currentColorArrangement.map((candyColor, index) => (
           <img
             key={index}
-            src={candyColor.imageSrc} // Changed from image
+            src={candyColor.imageSrc}
             alt={candyColor.color}
             data-id={index}
             draggable={true}
