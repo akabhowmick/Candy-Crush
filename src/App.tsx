@@ -1,25 +1,20 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ScoreBoard } from "./components/Scoreboard";
 import { CandyColor } from "./types/interfaces";
-import { candyColors, emptyCandy, generateNewCandy } from "./components/HelperFunctions";
-
-interface DragEventTarget extends EventTarget {
-  src: string;
-  alt: string;
-  getAttribute(name: string): string | null;
-}
+import { candies, candyColors, emptyCandy, generateNewCandy } from "./components/HelperFunctions";
+import "./App.css";
 
 const App: React.FC = () => {
   const [currentColorArrangement, setCurrentColorArrangement] = useState<CandyColor[]>([
     emptyCandy,
   ]);
-  const [squareBeingDragged, setSquareBeingDragged] = useState<CandyColor>(emptyCandy);
-  const [squareBeingReplaced, setSquareBeingReplaced] = useState<CandyColor>(emptyCandy);
+  const [squareBeingDragged, setSquareBeingDragged] = useState<HTMLImageElement | null>(null);
+  const [squareBeingReplaced, setSquareBeingReplaced] = useState<HTMLImageElement | null>(null);
   const [scoreDisplay, setScoreDisplay] = useState<number>(0);
   const width = 8;
 
   const checkForColumnOfFour = useCallback(() => {
-    for (let i = 0; i <= 39; i++) {
+    for (let i = 0; i <= width * width - width * 3; i++) {
       const columnOfFour = [i, i + width, i + width * 2, i + width * 3];
       const decidedColor = currentColorArrangement[i];
       const isBlank = currentColorArrangement[i] === emptyCandy;
@@ -35,7 +30,7 @@ const App: React.FC = () => {
   }, [currentColorArrangement]);
 
   const checkForRowOfFour = useCallback(() => {
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < width * width; i++) {
       const rowOfFour = [i, i + 1, i + 2, i + 3];
       const decidedColor = currentColorArrangement[i];
       const notValid = [
@@ -99,7 +94,7 @@ const App: React.FC = () => {
 
       if (isFirstRow && currentColorArrangement[i] === emptyCandy) {
         const randomNumber = Math.floor(Math.random() * candyColors.length);
-        currentColorArrangement[i] = candyColors[randomNumber];
+        currentColorArrangement[i] = candies[randomNumber];
       }
 
       if (currentColorArrangement[i + width] === emptyCandy) {
@@ -107,23 +102,20 @@ const App: React.FC = () => {
         currentColorArrangement[i] = emptyCandy;
       }
     }
+    setCurrentColorArrangement([...currentColorArrangement]); // Ensure state is updated
   }, [currentColorArrangement]);
 
   const dragStart = (e: React.DragEvent<HTMLImageElement>) => {
-    setSquareBeingDragged((e.target as DragEventTarget).src);
+    setSquareBeingDragged(e.target as HTMLImageElement);
   };
 
   const dragDrop = (e: React.DragEvent<HTMLImageElement>) => {
-    setSquareBeingReplaced((e.target as DragEventTarget).src);
+    setSquareBeingReplaced(e.target as HTMLImageElement);
   };
 
   const dragEnd = () => {
-    const squareBeingDraggedId = parseInt(
-      squareBeingDragged.imageSrc.getAttribute("data-id") || "0"
-    );
-    const squareBeingReplacedId = parseInt(
-      squareBeingReplaced.imageSrc.getAttribute("data-id") || "0"
-    );
+    const squareBeingDraggedId = parseInt(squareBeingDragged?.getAttribute("data-id") || "0");
+    const squareBeingReplacedId = parseInt(squareBeingReplaced?.getAttribute("data-id") || "0");
 
     currentColorArrangement[squareBeingReplacedId] = {
       ...currentColorArrangement[squareBeingDraggedId],
@@ -153,8 +145,8 @@ const App: React.FC = () => {
       validMove &&
       (isARowOfThree || isARowOfFour || isAColumnOfFour || isAColumnOfThree)
     ) {
-      setSquareBeingDragged(emptyCandy);
-      setSquareBeingReplaced(emptyCandy);
+      setSquareBeingDragged(null);
+      setSquareBeingReplaced(null);
     } else {
       currentColorArrangement[squareBeingReplacedId] = {
         ...currentColorArrangement[squareBeingDraggedId],
