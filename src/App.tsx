@@ -105,6 +105,7 @@ const App: React.FC = () => {
     setCurrentColorArrangement([...currentColorArrangement]); // Ensure state is updated
   }, [currentColorArrangement]);
 
+  // ! drag creates a copy => not swapping 
   const dragStart = (e: React.DragEvent<HTMLImageElement>) => {
     setSquareBeingDragged(e.target as HTMLImageElement);
   };
@@ -127,10 +128,10 @@ const App: React.FC = () => {
     };
 
     const validMoves = [
-      squareBeingDraggedId - 1,
-      squareBeingDraggedId - width,
-      squareBeingDraggedId + 1,
-      squareBeingDraggedId + width,
+      squareBeingDraggedId - 1, // left 
+      squareBeingDraggedId - width, // up 
+      squareBeingDraggedId + 1, // right 
+      squareBeingDraggedId + width, // down 
     ];
 
     const validMove = validMoves.includes(squareBeingReplacedId);
@@ -161,6 +162,7 @@ const App: React.FC = () => {
   };
 
   const createBoard = () => {
+    // do we allow for things in a row 
     const randomColorArrangement: CandyColor[] = [];
     for (let i = 0; i < width * width; i++) {
       const randomColor = candyColors[Math.floor(Math.random() * candyColors.length)];
